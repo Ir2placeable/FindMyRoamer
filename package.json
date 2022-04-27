@@ -1,17 +1,15 @@
 {
   "name": "findmyroamer",
   "version": "1.0.0",
-  "description": "우리 금쪽이 정보를 블록체인에 저장하고 QR를 받급받으세요.",
-  "main": "server.js",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Ir2placeable/FindMyRoamer.git"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -19,6 +17,7 @@
   },
   "homepage": "https://github.com/Ir2placeable/FindMyRoamer#readme",
   "dependencies": {
-    "express": "^4.18.0"
+    "express": "^4.18.0",
+    "qrcode": "^1.5.0"
   }
 }
