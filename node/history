@@ -1,4 +1,0 @@
-eth.blockNumber
-miner.start()
-miner.start(4)
-miner.stop()
