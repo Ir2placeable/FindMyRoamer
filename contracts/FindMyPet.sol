@@ -8,7 +8,7 @@ contract FindMyPet {
 
 
     struct owner {
-        string password;
+        uint password;
         string name;
         string location;
         string phone;
@@ -25,12 +25,12 @@ contract FindMyPet {
         string qrcode;
     }
 
-//    modifier OnlyOwner (){
-//        require(msg.sender == pet_owner.id);
-//        _;
-//    }
+    //    modifier OnlyOwner (){
+    //        require(msg.sender == pet_owner.id);
+    //        _;
+    //    }
 
-    constructor (string memory _password, string memory owner_name, string memory owner_location, string memory owner_phone) {
+    constructor (uint _password, string memory owner_name, string memory owner_location, string memory owner_phone) {
         pet_owner.password = _password;
         pet_owner.name = owner_name;
         pet_owner.location = owner_location;
@@ -46,17 +46,17 @@ contract FindMyPet {
         my_pet.lost = false;
     }
 
-    function getMyPet(string memory _password) public view returns(string memory) {
-        require(pet_owner.password = _password);
+    function getMyPet(uint _password) public view returns(string memory) {
+        if (pet_owner.password == _password) { revert(); }
         return my_pet.qrcode;
     }
 
-    function lostPet() public OnlyOwner {
+    function lostPet() public {
         require(my_pet.lost == false);
         my_pet.lost = true;
     }
 
-    function findPet(string memory _qrcode) public OnlyOwner{
+    function findPet(string memory _qrcode) public{
         require(keccak256(abi.encodePacked(my_pet.qrcode)) == keccak256(abi.encodePacked(_qrcode)));
         require(my_pet.lost == true);
 
