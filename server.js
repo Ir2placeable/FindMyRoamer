@@ -1,29 +1,38 @@
+// modules for opening server
 const express = require('express');
 const server = express();
-const url = require('url');
 const server_port = 8080;
 
-const path = require('path');
-const fs = require('fs');
+// modules for connecting blockchain
 const solc = require('solc');
 const Web3 = require('web3');
-const blockchain_endpoint = 'http://10.30.114.49:8546';
+const blockchain_endpoint = 'http://172.30.76.207:8545';
 const web3 = new Web3(Web3.givenProvider || blockchain_endpoint);
 
-caller = "0x83e0b83f09183cb4bbD6CeAcb6De369456ef71A2"
-contract_objects = {}
+// modules for getting address from QR code
+const url = require('url');
+const path = require('path');
+const fs = require('fs');
+const QRCode = require('qrcode');
 
+const caller = web3.eth.getAccounts().then(result => {
+    return result[0]
+})
+contract_objects = {} // key : CA, value : Contract
+
+// 반려동물 등록 파트
 server.get('/register', (req, res) => {
-    let req_components = url.parse(req.url, true).query;
+    const input_query =  url.parse(req.url, true).query;
 
-    // let owner_name = req_components[owner_name];
-    // let owner_location = req_components[owner_location];
-    // let owner_phone = req_components[owner_phone];
-    let owner_name = "ato";
-    let owner_location = "seoul";
-    let owner_phone = 123
+    const address = registerPet(input_query['pw'], caller, input_query['owner_name'], input_query['owner_location'], input_query['owner_phone']
+        , input_query['pet_name'], input_query['pet_breed'], input_query['pet_feature'], input_query['pet_age'])
 
-    registerPet(caller, owner_name, owner_location, owner_phone)
+    QRCode.toDataURL(address, function(err, url) {
+        const data = url.replace(/.*,/, '');
+        const img = new Buffer(data, 'base64');
+        res.writeHead(200 , {'Content-Type':'image/png'});
+        res.end(img);
+    })
 })
 
 server.get('/report', (req, res) => {
@@ -63,7 +72,7 @@ function compile() {
     return solidity_compiled_result.contracts["FindMyPet.sol"].FindMyPet;
 
 }
-async function registerPet(caller, owner_name, owner_location, owner_phone) {
+async function registerPet(password, caller, owner_name, owner_location, owner_phone, pet_name, pet_breed, pet_feature, pet_age) {
     console.log('start creating new pet');
 
     const solidity_compiled_result = compile();
@@ -71,17 +80,18 @@ async function registerPet(caller, owner_name, owner_location, owner_phone) {
     const bytecode = solidity_compiled_result.evm.bytecode.object;
 
     await new web3.eth.Contract(interface)
-        .deploy({data : bytecode, arguments : [owner_name, owner_location, owner_phone]})
+        .deploy({data : bytecode, arguments : [password, owner_name, owner_location, owner_phone]})
         .send({gas : '3000000' , from : caller})
         .then(result => {
-            contract_objects[result.options.address] = result;
-            console.log(result.options.address);
+            let ca = result.options.address
+            contract_objects[ca] = result;
+            console.log("CA : ", ca);
 
-            // QR 코드 생성
-            // QR 이미지 생성
-            // 웹으로 QR 이미지 전송
-
+            result.methods.registerPet(pet_name, pet_breed, pet_feature, pet_age)
+                .send({from : caller, gas : '3000000'})
             console.log('finish creating new pet');
+
+            return 'google.com'
         })
 }
 

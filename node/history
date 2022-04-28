@@ -1,0 +1,7 @@
+eth.blockNumber
+miner.start()
+miner.stop()
+eth.blockNumber
+eth.getAccounts()
+eth.accounts[0]
+eth.defaultAccount()

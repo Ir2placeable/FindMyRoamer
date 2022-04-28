@@ -11,7 +11,7 @@ contract FindMyPet {
         string password;
         string name;
         string location;
-        uint phone;
+        string phone;
     }
 
     struct pet {
@@ -19,7 +19,7 @@ contract FindMyPet {
         string pet_name;
         string breed;
         string feature;
-        uint age;
+        string age;
         bool lost;
 
         string qrcode;
@@ -30,14 +30,14 @@ contract FindMyPet {
 //        _;
 //    }
 
-    constructor (string memory _password, string memory owner_name, string memory owner_location, uint owner_phone) {
+    constructor (string memory _password, string memory owner_name, string memory owner_location, string memory owner_phone) {
         pet_owner.password = _password;
         pet_owner.name = owner_name;
         pet_owner.location = owner_location;
         pet_owner.phone = owner_phone;
     }
 
-    function registerPet(string memory pet_name, string memory pet_breed, string memory pet_feature, uint pet_age) public {
+    function registerPet(string memory pet_name, string memory pet_breed, string memory pet_feature, string memory pet_age) public {
         my_pet.master = pet_owner;
         my_pet.pet_name = pet_name;
         my_pet.breed = pet_breed;

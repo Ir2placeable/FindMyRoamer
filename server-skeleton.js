@@ -4,7 +4,7 @@ const url = require('url');
 const QRCode = require('qrcode');
 // const server_address = "....."
 
-// 메인 홈 화면 
+// 메인 홈 화면
 app.get('/main', (req, res) => {
     // 반려동물 등록 웹페이지로 이동하는 버튼
 
