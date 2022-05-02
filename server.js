@@ -9,12 +9,16 @@ const solc = require('solc');
 const Web3 = require('web3');
 const blockchain_endpoint = 'http://172.31.8.46:8545';
 const web3 = new Web3(Web3.givenProvider || blockchain_endpoint);
-var caller;
+var owner;
+var finder;
 web3.eth.getAccounts().then(result => {
     caller = result[0];
+    finder = result[1];
     console.log('caller : ', caller);
+    console.log('finder : ', finder)
 
     web3.eth.personal.unlockAccount(caller, "123");
+    web3.eth.personal.unlockAccount(finder, "123");
 })
 contract_objects = {} // key : CA, value : Contract
 
@@ -107,24 +111,25 @@ server.get('/report', (req, res) => {
 
     // sample
     // aws_ip:3001/report/?ca=0x123&pw=123
-    lostPet(caller, target_contract, input_query['pw'], input_query['location'])
+    lostPet(caller, target_contract, input_query['pw'], input_query['lost_location'], input_query['prize'])
         .then(()=> {
             console.log('금쪽이 분실신고 완료');
         })
 })
 
 // 누군가 금쪽이를 발견한 파트
-server.get('/found', (req, res) => {
+server.get('/whospet', (req, res) => {
     let input_query = url.parse(req.url, true).query;
     const target_contract = contract_objects[input_query['ca']]
 
     // sample
     // aws_ip:3001/found/?ca=0x123
 
-    foundPet(caller, target_contract)
+    whosPet(finder, target_contract)
         .then(result => {
             console.log('주인정보 \n', result);
         })
+
 })
 
 // 금쪽이 분실신고 취소하는 파트
@@ -138,6 +143,17 @@ server.get('/cancel', (req, res) => {
     cancelLost(caller, target_contract, input_query['pw'])
         .then(() => {
             console.log('금쪽이 분실신고 취소완료');
+        })
+})
+
+// 금쪽이 다시 찾고 현상금 주는 파트
+server.get('/found', (req, res) => {
+    let input_query = url.parse(req.url, true).query;
+    const target_contract = contract_objects[input_query['ca']]
+
+    foundPet(caller, target_contract, input_query['pw'])
+        .then(() => {
+            console.log('현상금 받음');
         })
 })
 
@@ -159,7 +175,7 @@ function compile() {
     const solidity_compile_input = {
         language: 'Solidity',
         sources: {
-            'FindMyPet2.sol' : {
+            'FindMyPet3.sol' : {
                 content: source_code
             }
         },
@@ -172,7 +188,7 @@ function compile() {
         }
     };
     const solidity_compiled_result = JSON.parse(solc.compile(JSON.stringify(solidity_compile_input)));
-    return solidity_compiled_result.contracts["FindMyPet2.sol"].FindMyPet2;
+    return solidity_compiled_result.contracts["FindMyPet3.sol"].FindMyPet3;
 
 }
 async function registerPet(caller, pw, owner_name, owner_location, owner_phone,
@@ -200,25 +216,31 @@ async function registerPet(caller, pw, owner_name, owner_location, owner_phone,
     return ca;
 }
 
-async function lostPet(caller, target_contract, pw, lost_location) {
+
+async function lostPet(caller, target_contract, pw, lost_location, prize) {
     console.log('start lostPet function');
 
     await target_contract.methods.lostPet(pw, lost_location)
-        .send({from : caller, gas : 3000000 })
+        .send({from : caller, gas : 3000000 , value : prize});
 }
-
-async function foundPet(caller, target_contract) {
-    console.log('start foundPet function');
-
-    return await target_contract.methods.foundPet()
-        .call({from : caller});
-}
-
 async function cancelLost(caller, target_contract, pw) {
     console.log('start cancelLost function');
 
     await target_contract.methods.cancelLost(pw)
         .send({from : caller, gas : 3000000 });
+}
+
+async function whosPet(finder, target_contract) {
+    console.log('stary whosPet function');
+
+    return await target_contract.methods.whosPet()
+        .call({from : finder});
+}
+async function foundPet(caller, target_contract, pw) {
+    console.log('start foundPet function');
+
+    return await target_contract.methods.foundPet(pw)
+        .call({from : caller});
 }
 
 async function checkLost(caller, target_contract) {
