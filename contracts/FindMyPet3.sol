@@ -76,12 +76,14 @@ contract FindMyPet3 {
         pet.prize = 0;
     }
 
-    function whosPet() public returns (Owner memory) {
-        require(lost == true);
+    function setFinder() public {
         finder_addr = msg.sender;
+    }
 
+    function getOwner() public view returns(Owner memory){
         return owner;
     }
+
     function foundPet(uint _password) payable public OnlyOwner {
         require(password == _password);
 
