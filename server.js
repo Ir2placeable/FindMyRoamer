@@ -1,15 +1,16 @@
-// modules for opening server
+// 서버 개설 모듈
 const express = require('express');
 const server = express();
 const server_port = 3001;
 const server_ip = 'http://3.39.196.91'
 
-// blockchain initialization
+// 블록체인 연동 모듈
 const solc = require('solc');
 const Web3 = require('web3');
 const blockchain_endpoint = 'http://172.31.8.46:8545';
 const web3 = new Web3(Web3.givenProvider || blockchain_endpoint);
-// mock-up of owner and finder
+
+// Owner, Finder 고정 (Mock up)
 var owner;
 var finder;
 web3.eth.getAccounts().then(result => {
@@ -23,21 +24,19 @@ web3.eth.getAccounts().then(result => {
 })
 contract_objects = {} // key : CA, value : Contract
 
-// modules for getting address from QR code
+
+// QR코드 생성 모듈
 const url = require('url');
 const path = require('path');
 const fs = require('fs');
 const QRCode = require('qrcode');
 
+// ejs 페이지 모음
 // 엔트리 페이지
 server.get('/', (req, res) => {
-    res.send('엔트리 페이지')
     console.log('엔트리 페이지')
 
 })
-
-
-
 // 금쪽이 등록 페이지
 server.get('/register_page', (req, res) => {
     console.log('금쪽이 등록 페이지')
@@ -53,32 +52,6 @@ server.get('/register_page', (req, res) => {
     var pet_feature;
 
     // 여기에 moveto 주소로 이동하는 코드 작성하세요
-})
-// 블록체인에 금쪽이 등록하기
-server.get('/register', (req, res) => {
-    console.log('블록체인에 금쪽이 정보 등록 요청')
-    const input_query = url.parse(req.url, true).query;
-
-    // sample url
-    // register/?pw=123&owner_name=ato&owner_location=seoul&owner_phone=123&pet_name=choco&pet_breed=dog&pet_feature=black&pet_age=1
-
-    registerPet(caller, input_query['pw'], input_query['owner_name'], input_query['owner_location'], input_query['owner_phone']
-        , input_query['pet_name'], input_query['pet_breed'], input_query['pet_age'], input_query['pet_feature'])
-        .then((result) => {
-
-            const qr_source = server_ip + ':' + server_port + '/QRcode/?ca=' + result;
-            console.log('qr_source :' , qr_source)
-
-            QRCode.toDataURL(qr_source, function (err, url) {
-                const data = url.replace(/.*,/, '');
-                const img = new Buffer(data, 'base64');
-                res.writeHead(200, {'Content-Type': 'image/png'});
-                res.end(img);
-            })
-        })
-        .catch((err) => {
-            console.log('error in register function',);
-        })
 })
 // 분실된 금쪽이들을 보여주는 파트
 server.get('/browse', (req, res) => {
@@ -111,9 +84,6 @@ server.get('/balance', (req, res) => {
         res.send(temp);
     })
 })
-
-
-
 // QR 코드로 접속하는 페이지
 server.get('/QRcode', (req, res) => {
     console.log('QR코드 엔트리 페이지')
@@ -135,8 +105,6 @@ server.get('/QRcode', (req, res) => {
     const moveto = server_ip + ":" + server_port + "/" + command + "/?ca=" + ca + "%pw=" + password
 
 })
-
-
 // 금쪽이 분실신고 하는 페이지
 server.get('/report_page', (req, res) => {
     console.log('금쪽이 분실신고 하는 페이지');
@@ -146,7 +114,45 @@ server.get('/report_page', (req, res) => {
     console.log('ca : ', ca);
 
 })
-// 블록체인에 금쪽이 분실 등록하기
+// 금쪽이 분실신고 취소하는 페이지
+server.get('cancel_page', (req, res) => {
+    console.log('금쪽이 분실신고 취소하는 페이지');
+
+    const input_query = url.parse(req.url, true).query;
+    const ca = input_query['ca'];
+    console.log('ca : ', ca);
+
+})
+
+
+// 블록체인 함수실행 모음 (Web3)
+// 블록체인에 금쪽이 등록 요청하기
+server.get('/register', (req, res) => {
+    console.log('블록체인에 금쪽이 정보 등록 요청')
+    const input_query = url.parse(req.url, true).query;
+
+    // sample url
+    // register/?pw=123&owner_name=ato&owner_location=seoul&owner_phone=123&pet_name=choco&pet_breed=dog&pet_feature=black&pet_age=1
+
+    registerPet(caller, input_query['pw'], input_query['owner_name'], input_query['owner_location'], input_query['owner_phone']
+        , input_query['pet_name'], input_query['pet_breed'], input_query['pet_age'], input_query['pet_feature'])
+        .then((result) => {
+
+            const qr_source = server_ip + ':' + server_port + '/QRcode/?ca=' + result;
+            console.log('qr_source :' , qr_source)
+
+            QRCode.toDataURL(qr_source, function (err, url) {
+                const data = url.replace(/.*,/, '');
+                const img = new Buffer(data, 'base64');
+                res.writeHead(200, {'Content-Type': 'image/png'});
+                res.end(img);
+            })
+        })
+        .catch((err) => {
+            console.log('error in register function',);
+        })
+})
+// 블록체인에 금쪽이 가출 요청하기
 server.get('/report', (req, res) => {
     console.log('블록체인에 금쪽이 분실 등록 요청');
 
@@ -164,18 +170,7 @@ server.get('/report', (req, res) => {
             console.log('error in report function');
         })
 })
-
-
-// 금쪽이 분실신고 취소하는 페이지
-server.get('cancel_page', (req, res) => {
-    console.log('금쪽이 분실신고 취소하는 페이지');
-
-    const input_query = url.parse(req.url, true).query;
-    const ca = input_query['ca'];
-    console.log('ca : ', ca);
-
-})
-// 블록체인에 금쪽이 분실 취소하기
+// 블록체인에 금쪽이 가출취소 요청하기
 server.get('/cancel', (req, res) => {
     console.log('블록체인에 금쪽이 분실 취소 요청');
 
@@ -194,9 +189,7 @@ server.get('/cancel', (req, res) => {
             console.log('error in cancel function');
         })
 })
-
-
-// 누군가 금쪽이를 발견한 파트
+// 블록체인에 금쪽이 주인정보 요청하기
 server.get('/whospet', (req, res) => {
     console.log('블록체인에서 금쪽이 주인 정보 요청');
 
@@ -218,10 +211,7 @@ server.get('/whospet', (req, res) => {
         })
 
 })
-
-
-
-// 금쪽이 다시 찾고 현상금 주는 파트
+// 블록체인에 사례금전송 요청하기
 server.get('/found', (req, res) => {
     let input_query = url.parse(req.url, true).query;
     const target_contract = contract_objects[input_query['ca']]
@@ -237,7 +227,8 @@ server.get('/found', (req, res) => {
 })
 
 
-
+// 스마트 컨트랙트 구동 함수
+// 스마트 컨트랙트 컴파일
 function compile() {
     const filePath = path.resolve(__dirname, 'contracts', 'FindMyPet3.sol');
     const source_code = fs.readFileSync(filePath, 'utf8');
@@ -260,6 +251,7 @@ function compile() {
     return solidity_compiled_result.contracts["FindMyPet3.sol"].FindMyPet3;
 
 }
+// 스마트 컨트랙트 배포
 async function registerPet(caller, pw, owner_name, owner_location, owner_phone,
                            pet_name, pet_breed, pet_age, pet_feature) {
     console.log('start registerPet function');
@@ -284,7 +276,6 @@ async function registerPet(caller, pw, owner_name, owner_location, owner_phone,
             })
     return ca;
 }
-
 async function lostPet(caller, target_contract, pw, lost_location, prize) {
     console.log('start lostPet function');
 
@@ -298,7 +289,6 @@ async function cancelLost(caller, target_contract, pw) {
     await target_contract.methods.cancelLost(pw)
         .call({from : caller});
 }
-
 async function whosPet(finder, target_contract) {
     console.log('start whosPet function');
 
@@ -311,19 +301,18 @@ async function whosPet(finder, target_contract) {
         .call({from : finder})
         .then(console.log('getOwner Done'));
 }
-
 async function foundPet(caller, target_contract, pw) {
     console.log('start foundPet function');
 
     return await target_contract.methods.foundPet(pw)
         .send({from : caller, gas : 3000000 });
 }
-
 async function checkLost(caller, target_contract) {
     console.log('start checkLost function');
     return await target_contract.methods.checkLost()
         .call({from : caller})
 }
+
 
 server.listen(server_port, () => {
     console.log('FindMyRoamer server open');
