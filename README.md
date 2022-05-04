@@ -1,4 +1,6 @@
-# FindMyRoamer
+<img width="285" alt="우리 금쪽이를 찾아줘" src="https://user-images.githubusercontent.com/24891555/166637528-cb7f602d-6d7f-44a3-a792-82d37b39d952.png">
+
+#
 
 우리 금쪽이 정보를 블록체인에 저장하고 QR를 받급받으세요.
 
