@@ -99,7 +99,7 @@ server.get('/browse', (req, res) => {
         console.log(result);
         res.send(result);
     })
-    
+
 })
 // 내 잔액 보기 페이지
 server.get('/balance', (req, res) => {
@@ -289,7 +289,8 @@ async function lostPet(caller, target_contract, pw, lost_location, prize) {
     console.log('start lostPet function');
 
     await target_contract.methods.lostPet(pw, lost_location)
-        .send({from : caller, gas : 3000000 , value : prize});
+        .send({from : caller, gas : 3000000, value : web3.utils.fromWei(prize, "ether")});
+        // .send({from : caller, gas : 3000000 , value : prize});
 }
 async function cancelLost(caller, target_contract, pw) {
     console.log('start cancelLost function');
