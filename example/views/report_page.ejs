@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test Web Site</title>
+</head>
+
+<body id="body" className="body">
+    <h1>분실신고 페이지</h1>
+    <form method="get">
+        <input style="display: none" type="text" value="<%=message%>" name="ca" />
+        <br><br>
+        비밀번호 : <input type="password" name="pw">
+        <br><br>
+        분실지역 : <input type="text" name="lost_location">
+        <br><br>
+        사례금 : <input type="text" name="prize">
+        <br><br>
+        <input type="submit" value="등록" formaction="./report/" />
+    </form>
+    <script>
+        document.getElementById("sampleDiv").style.visibility = 'visible';
+    </script>
+</body>
+
+</html>
