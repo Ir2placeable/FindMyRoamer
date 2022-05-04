@@ -2,13 +2,14 @@
 const express = require('express');
 const server = express();
 const server_port = 3001;
-const server_ip = 'ec2-52-78-174-155.ap-northeast-2.compute.amazonaws.com'
+const server_ip = 'http://3.39.196.91'
 
 // blockchain initialization
 const solc = require('solc');
 const Web3 = require('web3');
 const blockchain_endpoint = 'http://172.31.8.46:8545';
 const web3 = new Web3(Web3.givenProvider || blockchain_endpoint);
+// mock-up of owner and finder
 var owner;
 var finder;
 web3.eth.getAccounts().then(result => {
@@ -17,8 +18,8 @@ web3.eth.getAccounts().then(result => {
     console.log('caller : ', caller);
     console.log('finder : ', finder)
 
-    web3.eth.personal.unlockAccount(caller, "123");
-    web3.eth.personal.unlockAccount(finder, "123");
+    web3.eth.personal.unlockAccount(caller, "123", 0);
+    web3.eth.personal.unlockAccount(finder, "123", 0);
 })
 contract_objects = {} // key : CA, value : Contract
 
@@ -28,20 +29,18 @@ const path = require('path');
 const fs = require('fs');
 const QRCode = require('qrcode');
 
-// 메인 홈페이지 파트
-server.get('/main_page', (req, res) => {
+// 엔트리 페이지
+server.get('/', (req, res) => {
+    res.send('엔트리 페이지')
+    console.log('엔트리 페이지')
 
-    // 메인 홈페이지 html 전송 to cilent -> return page
-    var page; // ex) register_page or browse_page
-
-    // register_page 또는 browse_page로 이동하는 주소
-    const moveto = server_ip + ':' + server_port + '/' + page;
-
-    // 여기에 moveto 주소로 이동하는 코드 작성하세요
 })
 
-// 금쪽이 등록하는 페이지
+
+
+// 금쪽이 등록 페이지
 server.get('/register_page', (req, res) => {
+    console.log('금쪽이 등록 페이지')
 
     // 금쪽이 등록하는 html 페이지 -> return : pw, 주인이름, 주인지역, 주인번호, 금쪽 이름, 금쪽 종류, 금쪽 나이, 금쪽 특징
     var pw;
@@ -53,15 +52,11 @@ server.get('/register_page', (req, res) => {
     var pet_age;
     var pet_feature;
 
-    const moveto = server_ip + ':' + server_port + '/register/?pw=' +
-        pw + '&owner_name=' + owner_name + '&owner_location=' + owner_location + '&owner_number=' + owner_number +
-        '&pet_name=' + pet_name + '&pet_breed=' + pet_breed + '&pet_age=' + pet_age + '&pet_feature=' + pet_feature;
-
     // 여기에 moveto 주소로 이동하는 코드 작성하세요
 })
-
-// 금쪽이 등록하고 QR 보여주는 페이지
+// 블록체인에 금쪽이 등록하기
 server.get('/register', (req, res) => {
+    console.log('블록체인에 금쪽이 정보 등록 요청')
     const input_query = url.parse(req.url, true).query;
 
     // sample url
@@ -85,9 +80,43 @@ server.get('/register', (req, res) => {
             console.log('error in register function',);
         })
 })
+// 분실된 금쪽이들을 보여주는 파트
+server.get('/browse', (req, res) => {
+    console.log('블록체인에서 분실된 금쪽이 불러오기')
+
+    const getRoamers = async function () {
+        let pet_source = [];
+
+        for (var temp_ca in contract_objects) {
+            await checkLost(caller, contract_objects[temp_ca])
+                .then(result => {
+                    pet_source.push(result[0] + " " + result[1] + " " + result[2] + " " + result[3] + " " + result[4] + " " + result[5]);
+                })
+        }
+        return pet_source;
+    }
+    getRoamers().then(result => {
+        console.log(result);
+        res.send(result);
+    })
+    
+})
+// 내 잔액 보기 페이지
+server.get('/balance', (req, res) => {
+    console.log('내 잔액 보기');
+
+    web3.utils.fromWei(web3.eth.getBalance(finder), "ether").then(result => {
+        console.log('finder balance : ', result);
+        var temp = 'finder balance : ' + result;
+        res.send(temp);
+    })
+})
+
+
 
 // QR 코드로 접속하는 페이지
 server.get('/QRcode', (req, res) => {
+    console.log('QR코드 엔트리 페이지')
 
     // sample
     // aws_ip:3001/QRcode/?ca=0x123
@@ -107,8 +136,20 @@ server.get('/QRcode', (req, res) => {
 
 })
 
-// 금쪽이 분실신고 하는 파트
+
+// 금쪽이 분실신고 하는 페이지
+server.get('/report_page', (req, res) => {
+    console.log('금쪽이 분실신고 하는 페이지');
+
+    const input_query = url.parse(req.url, true).query;
+    const ca = input_query['ca'];
+    console.log('ca : ', ca);
+
+})
+// 블록체인에 금쪽이 분실 등록하기
 server.get('/report', (req, res) => {
+    console.log('블록체인에 금쪽이 분실 등록 요청');
+
     let input_query = url.parse(req.url, true).query;
     const target_contract = contract_objects[input_query['ca']]
 
@@ -124,8 +165,41 @@ server.get('/report', (req, res) => {
         })
 })
 
+
+// 금쪽이 분실신고 취소하는 페이지
+server.get('cancel_page', (req, res) => {
+    console.log('금쪽이 분실신고 취소하는 페이지');
+
+    const input_query = url.parse(req.url, true).query;
+    const ca = input_query['ca'];
+    console.log('ca : ', ca);
+
+})
+// 블록체인에 금쪽이 분실 취소하기
+server.get('/cancel', (req, res) => {
+    console.log('블록체인에 금쪽이 분실 취소 요청');
+
+    let input_query = url.parse(req.url, true).query;
+    const target_contract = contract_objects[input_query['ca']]
+
+    // sample
+    // aws_ip:3001/cancle/?ca=0x123&pw=123
+
+    cancelLost(caller, target_contract, input_query['pw'])
+        .then(() => {
+            console.log('금쪽이 분실신고 취소완료');
+            res.send('금쪽이 분실신고 취소완료')
+        })
+        .catch((err) => {
+            console.log('error in cancel function');
+        })
+})
+
+
 // 누군가 금쪽이를 발견한 파트
 server.get('/whospet', (req, res) => {
+    console.log('블록체인에서 금쪽이 주인 정보 요청');
+
     let input_query = url.parse(req.url, true).query;
     const target_contract = contract_objects[input_query['ca']]
 
@@ -145,23 +219,7 @@ server.get('/whospet', (req, res) => {
 
 })
 
-// 금쪽이 분실신고 취소하는 파트
-server.get('/cancel', (req, res) => {
-    let input_query = url.parse(req.url, true).query;
-    const target_contract = contract_objects[input_query['ca']]
 
-    // sample
-    // aws_ip:3001/cancle/?ca=0x123&pw=123
-
-    cancelLost(caller, target_contract, input_query['pw'])
-        .then(() => {
-            console.log('금쪽이 분실신고 취소완료');
-            res.send('금쪽이 분실신고 취소완료')
-        })
-        .catch((err) => {
-            console.log('error in cancel function');
-        })
-})
 
 // 금쪽이 다시 찾고 현상금 주는 파트
 server.get('/found', (req, res) => {
@@ -173,34 +231,12 @@ server.get('/found', (req, res) => {
         .then(() => {
             console.log('현상금 받음');
         })
-        .then(() => {
-            web3.eth.getBalance(finder)
-                .then(result => {
-                    console.log(result);
-                    res.send(result);
-                })
-        })
         .catch((err) => {
             console.log('error in found function');
         })
 })
 
-// 분실된 금쪽이들을 보여주는 파트
-server.get('/browse', (req, res) => {
 
-    var pet_source;
-    for (temp_ca in contract_objects) {
-        checkLost(caller, contract_objects[temp_ca])
-            .then(result => {
-                console.log(result);
-                pet_source = pet_source + result[0] + " " + result[1] + " " + result[2] + " " + result[3] + " " + result[4] + " " + result[5] + " ";
-            })
-            .catch((err) => {
-                console.log('error in browse function\n', err);
-            })
-    }
-    res.send(pet_source);
-})
 
 function compile() {
     const filePath = path.resolve(__dirname, 'contracts', 'FindMyPet3.sol');
