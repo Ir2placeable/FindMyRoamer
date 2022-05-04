@@ -21,7 +21,8 @@ web3.eth.getAccounts().then(result => {
     caller = result[0];
     finder = result[1];
     console.log('caller : ', caller);
-    console.log('finder : ', finder)
+    console.log('finder : ', finder);
+    console.log('');
 
     web3.eth.personal.unlockAccount(caller, "123", 0);
     web3.eth.personal.unlockAccount(finder, "123", 0);
@@ -38,18 +39,18 @@ const QRCode = require('qrcode');
 // ejs 페이지 모음
 // 엔트리 페이지
 server.get('/', (req, res) => {
-    console.log('엔트리 페이지')
+    console.log('사용자가 엔트리 페이지에 접속했습니다.');
 
     res.render('main.ejs', { title: '우리 금쪽이 찾기', message: '네트워크 최신기술 프로젝트' }, function (err, html) {
         if (err) {
-            console.log(err)
+            console.log(err);
         }
         res.end(html) // 응답 종료
     })
 })
 // 금쪽이 등록 페이지
 server.get('/register_page', (req, res) => {
-    console.log('금쪽이 등록 페이지')
+    console.log('사용자가 금쪽이 등록 페이지에 접속했습니다.')
 
     res.render('register_page.ejs', function (err, html) {
         if (err) {
@@ -60,7 +61,7 @@ server.get('/register_page', (req, res) => {
 })
 // 분실된 금쪽이들을 보여주는 파트
 server.get('/browse', (req, res) => {
-    console.log('블록체인에서 분실된 금쪽이 불러오기')
+    console.log('가출한 금쪽이들 조회 요청...')
 
     const getRoamers = async function () {
         let pet_source = [];
@@ -68,14 +69,21 @@ server.get('/browse', (req, res) => {
         for (var temp_ca in contract_objects) {
             await checkLost(caller, contract_objects[temp_ca])
                 .then(result => {
-                    pet_source.push(result[0] + " " + result[1] + " " + result[2] + " " + result[3] + " " + result[4] + " " + result[5]);
+                    pet_source.push("금쪽이\n이름:" + result[0] + " / 나이:" + result[1] + " / 종류:" + result[2] + " / 특징:" + result[3] + " / 분실위치:" + result[4] + " / 사례금:", parseInt(result[5])/1000000000000000000 + "Ether");
+                })
+                .catch(error => {
                 })
         }
         return pet_source;
     }
     getRoamers().then(result => {
-        console.log(result);
-        res.send(result);
+        if (result.length == 0) {
+            console.log('가출한 금쪽이들이 없습니다.');
+            res.send('가출한 금쪽이들이 없습니다.');
+        } else {
+            console.log('가출한 금쪽이들', result);
+            res.send(result);
+        }
 
         // result 데이터를 parameter로 만들고 browse.ejs에 넘겨주어야 한다.
         // res.render('browse.ejs', function (err, html) {
@@ -89,7 +97,7 @@ server.get('/browse', (req, res) => {
 })
 // 내 잔액 보기 페이지
 server.get('/balance', (req, res) => {
-    console.log('내 잔액 보기');
+    console.log('잔액 확인 요청');
 
     web3.utils.toWei(web3.eth.getBalance(finder), "ether").then(result => {
         console.log('finder balance : ', result);
@@ -99,11 +107,10 @@ server.get('/balance', (req, res) => {
 })
 // QR 코드로 접속하는 페이지
 server.get('/QRcode', (req, res) => {
-    console.log('QR코드 엔트리 페이지')
+    console.log('사용자가 QRcode로 접속했습니다.')
 
     const input_query = url.parse(req.url, true).query;
     const ca = input_query['ca'];
-    console.log('ca : ', ca);
 
     const moveto = "/?ca=" + ca;
     res.render('qr_main.ejs', { title: 'QR 메인페이지', message: moveto, }, function (err, html) {
@@ -115,11 +122,10 @@ server.get('/QRcode', (req, res) => {
 })
 // 금쪽이 분실신고 하는 페이지
 server.get('/QRcode/report_page', (req, res) => {
-    console.log('금쪽이 분실신고 하는 페이지');
+    console.log('사용자가 분실신고 페이지로 접속했습니다.');
 
     const input_query = url.parse(req.url, true).query;
     const ca = input_query['ca'];
-    console.log('ca : ', ca);
 
     const moveto = ca;
     res.render('report_page.ejs', { title: '분실신고 페이지', message: moveto, }, function (err, html) {
@@ -131,11 +137,10 @@ server.get('/QRcode/report_page', (req, res) => {
 })
 // 금쪽이 분실신고 취소하는 페이지
 server.get('/QRcode/cancel_page', (req, res) => {
-    console.log('금쪽이 분실신고 취소하는 페이지');
+    console.log('사용자가 분실취소 페이지로 입장했습니다.');
 
     const input_query = url.parse(req.url, true).query;
     const ca = input_query['ca'];
-    console.log('ca : ', ca);
 
     const moveto = ca;
     res.render('cancel_page.ejs', { title: '분실취소 페이지', message: moveto, }, function (err, html) {
@@ -148,7 +153,7 @@ server.get('/QRcode/cancel_page', (req, res) => {
 })
 // 사례금 보내는 페이지
 server.get('/QRcode/found_page', (req, res) => {
-    console.log('사례금 보내는 페이지');
+    console.log('사용자가 사례금 보내는 페이지로 접속했습니다.');
 
     const input_query = url.parse(req.url, true).query;
     const ca = input_query['ca'];
@@ -166,26 +171,28 @@ server.get('/QRcode/found_page', (req, res) => {
 // 블록체인 함수실행 모음 (Web3)
 // 블록체인에 금쪽이 등록 요청하기
 server.get('/register', (req, res) => {
-    console.log('블록체인에 금쪽이 정보 등록 요청')
+    console.log('블록체인에 금쪽이 정보 등록 요청...');
 
     const input_query = url.parse(req.url, true).query;
 
     // sample url
     // register/?pw=123&owner_name=ato&owner_location=seoul&owner_phone=123&pet_name=choco&pet_breed=dog&pet_feature=black&pet_age=1
 
-    registerPet(caller, input_query['pw'], input_query['owner_name'], input_query['owner_location'], input_query['owner_phone']
+    registerPet(caller, input_query['pw'], input_query['owner_name'], input_query['owner_location'], input_query['owner_phone'].replace('-','')
         , input_query['pet_name'], input_query['pet_breed'], input_query['pet_age'], input_query['pet_feature'])
         .then((result) => {
+            console.log('블록체인에 금쪽이 정보 등록 완료');
 
             const qr_source = server_ip + ':' + server_port + '/QRcode/?ca=' + result;
-            console.log('qr_source :' , qr_source)
 
             QRCode.toDataURL(qr_source, function (err, url) {
                 const data = url.replace(/.*,/, '');
-                const img = new Buffer(data, 'base64');
+                const img = new Buffer.from(data, 'base64');
                 res.writeHead(200, {'Content-Type': 'image/png'});
                 res.end(img);
             })
+
+            console.log('사용자에게 QR코드 발급 완료');
         })
         .catch((err) => {
             console.log('error in register function', err);
@@ -193,7 +200,7 @@ server.get('/register', (req, res) => {
 })
 // 블록체인에 금쪽이 가출 요청하기
 server.get('/QRcode/report_page/report', (req, res) => {
-    console.log('블록체인에 금쪽이 분실 등록 요청');
+    console.log('블록체인에 금쪽이 분실 등록 요청...');
 
     let input_query = url.parse(req.url, true).query;
     const target_contract = contract_objects[input_query['ca']]
@@ -212,12 +219,12 @@ server.get('/QRcode/report_page/report', (req, res) => {
             })
         })
         .catch((err) => {
-            console.log('error in report function', err);
+            console.log('비밀번호가 맞지 않습니다.');
         })
 })
 // 블록체인에 금쪽이 가출취소 요청하기
 server.get('/QRcode/cancel_page/cancel', (req, res) => {
-    console.log('블록체인에 금쪽이 분실 취소 요청');
+    console.log('블록체인에 금쪽이 분실 취소 요청...');
 
     let input_query = url.parse(req.url, true).query;
     const target_contract = contract_objects[input_query['ca']]
@@ -237,12 +244,12 @@ server.get('/QRcode/cancel_page/cancel', (req, res) => {
             })
         })
         .catch((err) => {
-            console.log('error in cancel function', err);
+            console.log('비밀번호가 맞지 않습니다.');
         })
 })
 // 블록체인에 금쪽이 주인정보 요청하기
 server.get('/QRcode/whospet', (req, res) => {
-    console.log('블록체인에서 금쪽이 주인 정보 요청');
+    console.log('블록체인에서 금쪽이 주인 정보 요청...');
 
     const input_query = url.parse(req.url, true).query;
     const ca = input_query['ca'];
@@ -254,8 +261,8 @@ server.get('/QRcode/whospet', (req, res) => {
     var owner_source = "";
     whosPet(finder, target_contract)
         .then(result => {
-            console.log('주인정보 \n', result);
             owner_source = owner_source + result[0] + " " + result[1] + " " + result[2]
+            console.log('주인 정보 : ', owner_source);
 
             res.render('whospet.ejs', { title: '금쪽이 찾기페이지', message: owner_source, }, function (err, html) {
                 if (err) {
@@ -265,18 +272,19 @@ server.get('/QRcode/whospet', (req, res) => {
             })
         })
         .catch((err) => {
-            console.log('error in whospet function\n\n', err);
+            console.log('가출신고가 되지 않았습니다.');
         })
 })
 // 블록체인에 사례금전송 요청하기
 server.get('/QRcode/found_page/found', (req, res) => {
+    console.log('블록체인에 사례금 전송 요청...');
+
     let input_query = url.parse(req.url, true).query;
     const target_contract = contract_objects[input_query['ca']]
 
-    // found/?ca=....&pw=123
     foundPet(caller, target_contract, input_query['pw'])
         .then(() => {
-            console.log('현상금 받음');
+            console.log('사례금 전송 완료');
 
             res.render('found.ejs', function (err, html) {
                 if (err) {
@@ -315,63 +323,60 @@ function compile() {
 
 }
 async function registerPet(caller, pw, owner_name, owner_location, owner_phone, pet_name, pet_breed, pet_age, pet_feature) {
-    console.log('start registerPet function');
-
     const solidity_compiled_result = compile();
     const interface = solidity_compiled_result.abi;
     const bytecode = solidity_compiled_result.evm.bytecode.object;
 
-    console.log('compile was done');
+    console.log('Compile done');
 
     var ca;
     await new web3.eth.Contract(interface)
         .deploy({data : bytecode, arguments : [pw, owner_name, owner_location, owner_phone, pet_name, pet_breed, pet_age, pet_feature]})
         .send({gas : 3000000 , from : caller})
         .then(result => {
-            console.log('deploy was done');
+            console.log('deploy done');
 
             ca = result.options.address;
             contract_objects[ca] = result;
-            console.log('result of registerPet : ', ca);
-
             })
+        .catch(err => {
+            console.log('error in deploy', err)
+        })
     return ca;
 }
 async function lostPet(caller, target_contract, pw, lost_location, prize) {
-    console.log('start lostPet function');
-
     await target_contract.methods.lostPet(pw, lost_location)
-        .send({from : caller, gas : 3000000, value : web3.utils.toWei(prize, 'ether') });
-        // .send({from : caller, gas : 3000000 , value : prize});
+        .send({from : caller, gas : 3000000, value : web3.utils.toWei(prize, 'ether') })
+        .catch(err => {
+            console.log('wrong password');
+        })
 }
 async function cancelLost(caller, target_contract, pw) {
-    console.log('start cancelLost function');
-
     await target_contract.methods.cancelLost(pw)
-        .call({from : caller});
+        .call({from : caller})
+        .catch(err => {
+            console.log('wrong password');
+        })
 }
 async function whosPet(finder, target_contract) {
-    console.log('start whosPet function');
-
     await target_contract.methods.setFinder()
         .send({from : finder, gas : 3000000 })
         .then(console.log('setFinder Done'));
-
-
+    
     return await target_contract.methods.getOwner()
         .call({from : finder})
         .then(console.log('getOwner Done'));
 }
 async function foundPet(caller, target_contract, pw) {
-    console.log('start foundPet function');
-
     return await target_contract.methods.foundPet(pw)
         .send({from : caller, gas : 3000000 });
 }
 async function checkLost(caller, target_contract) {
-    console.log('start checkLost function');
     return await target_contract.methods.checkLost()
         .call({from : caller})
+        .catch(err => {
+            console.log('reverted');
+        })
 }
 
 

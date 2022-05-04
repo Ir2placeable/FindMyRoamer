@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 contract FindMyPet3 {
 
     // for security
-    uint private password;
+    string private password;
     address private owner_addr;
     address private finder_addr;
 
@@ -16,14 +16,14 @@ contract FindMyPet3 {
     struct Owner {
         string name;
         string location;
-        uint phone;
+        string phone;
     }
     Owner private owner;
 
     // pet part
     struct Pet {
         string name;
-        uint age;
+        string age;
 
         string breed;
         string feature;
@@ -40,8 +40,8 @@ contract FindMyPet3 {
         _;
     }
 
-    constructor (uint _password, string memory _owner_name, string memory _owner_location, uint _owner_phone
-    , string memory _pet_name, string memory _pet_breed, uint _pet_age, string memory _pet_feature) {
+    constructor (string memory _password, string memory _owner_name, string memory _owner_location, string memory _owner_phone
+    , string memory _pet_name, string memory _pet_breed, string memory _pet_age, string memory _pet_feature) {
 
         password = _password;
 
@@ -59,16 +59,16 @@ contract FindMyPet3 {
 
     }
 
-    function lostPet(uint _password, string memory _lost_location) payable public OnlyOwner {
-        require(password == _password);
+    function lostPet(string memory _password, string memory _lost_location) payable public OnlyOwner {
+        keccak256(abi.encodePacked(password)) == keccak256(abi.encodePacked(_password));
         require(lost == false);
 
         lost = true;
         pet.lost_location = _lost_location;
         pet.prize = msg.value;
     }
-    function cancelLost(uint _password) public OnlyOwner {
-        require(password == _password);
+    function cancelLost(string memory _password) public OnlyOwner {
+        keccak256(abi.encodePacked(password)) == keccak256(abi.encodePacked(_password));
         require(lost == true);
 
         lost = false;
@@ -77,6 +77,7 @@ contract FindMyPet3 {
     }
 
     function setFinder() public {
+        require(lost == true);
         finder_addr = msg.sender;
     }
 
@@ -84,8 +85,8 @@ contract FindMyPet3 {
         return owner;
     }
 
-    function foundPet(uint _password) payable public OnlyOwner {
-        require(password == _password);
+    function foundPet(string memory _password) payable public OnlyOwner {
+        keccak256(abi.encodePacked(password)) == keccak256(abi.encodePacked(_password));
 
         payable(finder_addr).transfer(pet.prize);
     }
