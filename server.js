@@ -4,6 +4,10 @@ const server = express();
 const server_port = 3001;
 const server_ip = 'http://3.39.196.91'
 
+// ejs 엔진을 실행하기 위한 코드
+server.set('views', __dirname + '/views');
+server.set('view engine', 'ejs');
+
 // 블록체인 연동 모듈
 const solc = require('solc');
 const Web3 = require('web3');
@@ -36,22 +40,23 @@ const QRCode = require('qrcode');
 server.get('/', (req, res) => {
     console.log('엔트리 페이지')
 
+    res.render('main.ejs', { title: '우리 금쪽이 찾기', message: '네트워크 최신기술 프로젝트' }, function (err, html) {
+        if (err) {
+            console.log(err)
+        }
+        res.end(html) // 응답 종료
+    })
 })
 // 금쪽이 등록 페이지
 server.get('/register_page', (req, res) => {
     console.log('금쪽이 등록 페이지')
 
-    // 금쪽이 등록하는 html 페이지 -> return : pw, 주인이름, 주인지역, 주인번호, 금쪽 이름, 금쪽 종류, 금쪽 나이, 금쪽 특징
-    var pw;
-    var owner_name;
-    var owner_location;
-    var owner_number;
-    var pet_name;
-    var pet_breed;
-    var pet_age;
-    var pet_feature;
-
-    // 여기에 moveto 주소로 이동하는 코드 작성하세요
+    res.render('register_page.ejs', function (err, html) {
+        if (err) {
+            console.log(err)
+        }
+        res.end(html) // 응답 종료
+    })
 })
 // 분실된 금쪽이들을 보여주는 파트
 server.get('/browse', (req, res) => {
@@ -71,6 +76,14 @@ server.get('/browse', (req, res) => {
     getRoamers().then(result => {
         console.log(result);
         res.send(result);
+
+        // result 데이터를 parameter로 만들고 browse.ejs에 넘겨주어야 한다.
+        // res.render('browse.ejs', function (err, html) {
+        //     if (err) {
+        //         console.log(err)
+        //     }
+        //     res.end(html) // 응답 종료
+        // })
     })
 
 })
@@ -78,7 +91,7 @@ server.get('/browse', (req, res) => {
 server.get('/balance', (req, res) => {
     console.log('내 잔액 보기');
 
-    web3.utils.fromWei(web3.eth.getBalance(finder), "ether").then(result => {
+    web3.utils.toWei(web3.eth.getBalance(finder), "ether").then(result => {
         console.log('finder balance : ', result);
         var temp = 'finder balance : ' + result;
         res.send(temp);
@@ -88,40 +101,65 @@ server.get('/balance', (req, res) => {
 server.get('/QRcode', (req, res) => {
     console.log('QR코드 엔트리 페이지')
 
-    // sample
-    // aws_ip:3001/QRcode/?ca=0x123
     const input_query = url.parse(req.url, true).query;
     const ca = input_query['ca'];
     console.log('ca : ', ca);
-    res.send('QRcode page');
 
-
-    // 여기에 페이지 추가 => command 와 password 리턴
-
-    // mockup
-    const command = 'report' // or 'found'
-    const password = "123"
-    // mockup
-    const moveto = server_ip + ":" + server_port + "/" + command + "/?ca=" + ca + "%pw=" + password
-
+    const moveto = "/?ca=" + ca;
+    res.render('qr_main.ejs', { title: 'QR 메인페이지', message: moveto, }, function (err, html) {
+        if (err) {
+            console.log(err)
+        }
+        res.end(html) // 응답 종료
+    })
 })
 // 금쪽이 분실신고 하는 페이지
-server.get('/report_page', (req, res) => {
+server.get('/QRcode/report_page', (req, res) => {
     console.log('금쪽이 분실신고 하는 페이지');
 
     const input_query = url.parse(req.url, true).query;
     const ca = input_query['ca'];
     console.log('ca : ', ca);
 
+    const moveto = ca;
+    res.render('report_page.ejs', { title: '분실신고 페이지', message: moveto, }, function (err, html) {
+        if (err) {
+            console.log(err)
+        }
+        res.end(html) // 응답 종료
+    })
 })
 // 금쪽이 분실신고 취소하는 페이지
-server.get('cancel_page', (req, res) => {
+server.get('/QRcode/cancel_page', (req, res) => {
     console.log('금쪽이 분실신고 취소하는 페이지');
 
     const input_query = url.parse(req.url, true).query;
     const ca = input_query['ca'];
     console.log('ca : ', ca);
 
+    const moveto = ca;
+    res.render('cancel_page.ejs', { title: '분실취소 페이지', message: moveto, }, function (err, html) {
+        if (err) {
+            console.log(err)
+        }
+        res.end(html) // 응답 종료
+    })
+
+})
+// 사례금 보내는 페이지
+server.get('/QRcode/found_page', (req, res) => {
+    console.log('사례금 보내는 페이지');
+
+    const input_query = url.parse(req.url, true).query;
+    const ca = input_query['ca'];
+    const moveto = ca;
+
+    res.render('found_page.ejs', { title: '금쪽이 찾기페이지', message: moveto, }, function (err, html) {
+        if (err) {
+            console.log(err)
+        }
+        res.end(html) // 응답 종료
+    })
 })
 
 
@@ -129,6 +167,7 @@ server.get('cancel_page', (req, res) => {
 // 블록체인에 금쪽이 등록 요청하기
 server.get('/register', (req, res) => {
     console.log('블록체인에 금쪽이 정보 등록 요청')
+
     const input_query = url.parse(req.url, true).query;
 
     // sample url
@@ -149,11 +188,11 @@ server.get('/register', (req, res) => {
             })
         })
         .catch((err) => {
-            console.log('error in register function',);
+            console.log('error in register function', err);
         })
 })
 // 블록체인에 금쪽이 가출 요청하기
-server.get('/report', (req, res) => {
+server.get('/QRcode/report_page/report', (req, res) => {
     console.log('블록체인에 금쪽이 분실 등록 요청');
 
     let input_query = url.parse(req.url, true).query;
@@ -164,14 +203,20 @@ server.get('/report', (req, res) => {
     lostPet(caller, target_contract, input_query['pw'], input_query['lost_location'], input_query['prize'])
         .then(()=> {
             console.log('금쪽이 분실신고 완료');
-            res.send('금쪽이 분실신고 완료');
+
+            res.render('report.ejs', function (err, html) {
+                if (err) {
+                    console.log(err)
+                }
+                res.end(html) // 응답 종료
+            })
         })
         .catch((err) => {
-            console.log('error in report function');
+            console.log('error in report function', err);
         })
 })
 // 블록체인에 금쪽이 가출취소 요청하기
-server.get('/cancel', (req, res) => {
+server.get('/QRcode/cancel_page/cancel', (req, res) => {
     console.log('블록체인에 금쪽이 분실 취소 요청');
 
     let input_query = url.parse(req.url, true).query;
@@ -183,17 +228,24 @@ server.get('/cancel', (req, res) => {
     cancelLost(caller, target_contract, input_query['pw'])
         .then(() => {
             console.log('금쪽이 분실신고 취소완료');
-            res.send('금쪽이 분실신고 취소완료')
+
+            res.render('cancel.ejs', function (err, html) {
+                if (err) {
+                    console.log(err)
+                }
+                res.end(html) // 응답 종료
+            })
         })
         .catch((err) => {
-            console.log('error in cancel function');
+            console.log('error in cancel function', err);
         })
 })
 // 블록체인에 금쪽이 주인정보 요청하기
-server.get('/whospet', (req, res) => {
+server.get('/QRcode/whospet', (req, res) => {
     console.log('블록체인에서 금쪽이 주인 정보 요청');
 
-    let input_query = url.parse(req.url, true).query;
+    const input_query = url.parse(req.url, true).query;
+    const ca = input_query['ca'];
     const target_contract = contract_objects[input_query['ca']]
 
     // sample
@@ -204,15 +256,20 @@ server.get('/whospet', (req, res) => {
         .then(result => {
             console.log('주인정보 \n', result);
             owner_source = owner_source + result[0] + " " + result[1] + " " + result[2]
-            res.send(owner_source);
+
+            res.render('whospet.ejs', { title: '금쪽이 찾기페이지', message: owner_source, }, function (err, html) {
+                if (err) {
+                    console.log(err)
+                }
+                res.end(html) // 응답 종료
+            })
         })
         .catch((err) => {
             console.log('error in whospet function\n\n', err);
         })
-
 })
 // 블록체인에 사례금전송 요청하기
-server.get('/found', (req, res) => {
+server.get('/QRcode/found_page/found', (req, res) => {
     let input_query = url.parse(req.url, true).query;
     const target_contract = contract_objects[input_query['ca']]
 
@@ -220,15 +277,21 @@ server.get('/found', (req, res) => {
     foundPet(caller, target_contract, input_query['pw'])
         .then(() => {
             console.log('현상금 받음');
+
+            res.render('found.ejs', function (err, html) {
+                if (err) {
+                    console.log(err)
+                }
+                res.end(html) // 응답 종료
+            })
         })
         .catch((err) => {
-            console.log('error in found function');
+            console.log('error in found function', err);
         })
 })
 
 
 // 스마트 컨트랙트 구동 함수
-// 스마트 컨트랙트 컴파일
 function compile() {
     const filePath = path.resolve(__dirname, 'contracts', 'FindMyPet3.sol');
     const source_code = fs.readFileSync(filePath, 'utf8');
@@ -251,9 +314,7 @@ function compile() {
     return solidity_compiled_result.contracts["FindMyPet3.sol"].FindMyPet3;
 
 }
-// 스마트 컨트랙트 배포
-async function registerPet(caller, pw, owner_name, owner_location, owner_phone,
-                           pet_name, pet_breed, pet_age, pet_feature) {
+async function registerPet(caller, pw, owner_name, owner_location, owner_phone, pet_name, pet_breed, pet_age, pet_feature) {
     console.log('start registerPet function');
 
     const solidity_compiled_result = compile();
@@ -280,7 +341,7 @@ async function lostPet(caller, target_contract, pw, lost_location, prize) {
     console.log('start lostPet function');
 
     await target_contract.methods.lostPet(pw, lost_location)
-        .send({from : caller, gas : 3000000, value : web3.utils.fromWei(prize, "ether")});
+        .send({from : caller, gas : 3000000, value : web3.utils.toWei(prize, 'ether') });
         // .send({from : caller, gas : 3000000 , value : prize});
 }
 async function cancelLost(caller, target_contract, pw) {
