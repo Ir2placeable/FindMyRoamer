@@ -2,7 +2,7 @@
 // 
 pragma solidity ^0.8.13;
 
-contract FindMyPet3 {
+contract FindMyPet4 {
 
     // for security
     string private password;
@@ -59,16 +59,14 @@ contract FindMyPet3 {
 
     }
 
-    function lostPet(string memory _password, string memory _lost_location) payable public OnlyOwner {
-        require(keccak256(abi.encodePacked(password)) == keccak256(abi.encodePacked(_password)));
+    function lostPet(string memory _lost_location) payable public OnlyOwner {
         require(lost == false);
 
         lost = true;
         pet.lost_location = _lost_location;
         pet.prize = msg.value;
     }
-    function cancelLost(string memory _password) public OnlyOwner {
-        require(keccak256(abi.encodePacked(password)) == keccak256(abi.encodePacked(_password)));
+    function cancelLost() public OnlyOwner {
         require(lost == true);
 
         lost = false;
@@ -85,9 +83,7 @@ contract FindMyPet3 {
         return owner;
     }
 
-    function foundPet(string memory _password) payable public OnlyOwner {
-        require(keccak256(abi.encodePacked(password)) == keccak256(abi.encodePacked(_password)));
-
+    function foundPet() payable public OnlyOwner {
         payable(finder_addr).transfer(pet.prize);
     }
 
@@ -97,4 +93,7 @@ contract FindMyPet3 {
         return pet;
     }
 
+    function checkPassword(string memory _password) private view{
+        require(keccak256(abi.encodePacked(password)) == keccak256(abi.encodePacked(_password)));
+    }
 }

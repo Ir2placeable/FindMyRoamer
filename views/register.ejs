@@ -24,8 +24,8 @@
                     location.href = "/"
                 }
                 function movepage2() {
-                    alert("qr코드 발급이 완료되었습니다!")
-                    location.href = "/genqr"
+                    alert("다음에 나오는 QR코드를 저장하세요");
+                    location.href = './genqr' + '<%=message%>'.replace(/&amp;/gi, '&') // (수정 ver1.1)
                 }
             </script>
 
