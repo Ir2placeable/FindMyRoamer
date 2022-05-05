@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>우리 금쪽이를 찾아줘</title>
+</head>
+
+<body id="body" className="body">
+    <h1>사례금 보내기 페이지</h1>
+    <form method="get">
+        <input style="display: none" type="text" value="<%=message%>" name="ca" />
+        <br><br>
+        비밀번호 : <input type="password" name="pw">
+        <br><br>
+        <input type="submit" value="등록" formaction="./found/" />
+    </form>
+    <script>
+        document.getElementById("sampleDiv").style.visibility = 'visible';
+    </script>
+</body>
+
+</html>

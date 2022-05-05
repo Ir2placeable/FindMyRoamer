@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리 금쪽이를 찾아줘</title>
+</head>
+
+<body>
+    <h1>
+        <%=title%>
+    </h1>
+    <button onclick="location.href = './report_page' + '<%=message%>'">분실신고</button>
+    <button onclick="location.href = './cancel_page' + '<%=message%>'">분실취소</button>
+    <button onclick="location.href = './whospet' + '<%=message%>'">금쪽이 발견</button>
+    <button onclick="location.href = './found_page' + '<%=message%>'">사례금 보내기</button>
+</body>
+
+</html>
