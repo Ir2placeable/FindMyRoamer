@@ -76,21 +76,16 @@ server.get('/browse', (req, res) => {
         }
         return pet_source;
     }
-    getRoamers().then(result => {
-        if (result.length == 0) {
-            console.log('가출한 금쪽이들이 없습니다.');
-            res.send('가출한 금쪽이들이 없습니다.');
-        } else {
-            res.send(result);
-        }
 
-        // result 데이터를 parameter로 만들고 browse.ejs에 넘겨주어야 한다.
-        // res.render('browse.ejs', function (err, html) {
-        //     if (err) {
-        //         console.log(err)
-        //     }
-        //     res.end(html) // 응답 종료
-        // })
+    getRoamers().then(result => {
+        var roamers;
+        if (result.length == 0) {
+            roamers = '가출한 금쪽이들이 없습니다.';
+        } else { roamers = result; }
+        res.render('browse.ejs', { title: 'QR 메인페이지', message: roamers, }, function (err, html) {
+            if (err) { console.log(err) }
+            res.end(html) // 응답 종료
+        })
     })
 
 })
@@ -241,14 +236,24 @@ server.get('/QRcode/report_page/report', (req, res) => {
     console.log('블록체인에 금쪽이 분실 등록 요청...');
 
     let input_query = url.parse(req.url, true).query;
+    const ca = input_query['ca'];
     const target_contract = contract_objects[input_query['ca']]
 
     lostPet(caller, target_contract, input_query['pw'], input_query['lost_location'], input_query['prize'])
         .then((result)=> {
+            console.log(result);
             if (result == 'wrong password') {
                 // 비밀번호 잘못 입력 페이지 렌더링
+                res.render('wrong_password.ejs', { title: '패스워드 오류', message: server_ip + ":"+server_port + '/QRcode/report_page/?ca=' + ca }, function (err, html) {
+                    if (err) { console.log (err) }
+                    res.end(html);
+                })
             } else if (result == 'not roamer') {
                 // 가출 상태가 아닙니다 페이지 렌더링
+                res.render('not_roamer.ejs', { title: '이미 가출 신고가 되었습니다.', message: server_ip + ":"+server_port + '/QRcode/?ca=' + ca }, function (err, html) {
+                    if (err) { console.log (err) }
+                    res.end(html);
+                })
             } else {
                 console.log('금쪽이 분실신고 완료');
                 res.render('report.ejs', function (err, html) {
@@ -263,14 +268,24 @@ server.get('/QRcode/cancel_page/cancel', (req, res) => {
     console.log('블록체인에 금쪽이 분실 취소 요청...');
 
     let input_query = url.parse(req.url, true).query;
+    const ca = input_query['ca'];
     const target_contract = contract_objects[input_query['ca']]
 
     cancelLost(caller, target_contract, input_query['pw'])
         .then((result) => {
+            console.log(result);
             if (result == 'wrong password') {
                 // 비밀번호 잘못 입력 페이지 렌더링
+                res.render('wrong_password.ejs', { title: '패스워드 오류입니다.', message: server_ip + ":" +server_port + '/QRcode/cancel_page/?ca=' + ca }, function (err, html) {
+                    if (err) { console.log (err) }
+                    res.end(html);
+                })
             } else if (result == 'not roamer') {
                 // 가출 상태가 아닙니다 페이지 렌더링
+                res.render('not_roamer.ejs', { title: '가출 신고가 되지 않았습니다.', message: server_ip + ":" +server_port + '/QRcode/?ca=' + ca }, function (err, html) {
+                    if (err) { console.log (err) }
+                    res.end(html)
+                })
             } else {
                 console.log('금쪽이 분실신고 취소완료');
                 res.render('cancel.ejs', function (err, html) {
@@ -294,31 +309,52 @@ server.get('/QRcode/whospet', (req, res) => {
     var owner_source = "";
     whosPet(finder, target_contract)
         .then(result => {
-            owner_source = owner_source + result[0] + " " + result[1] + " " + result[2]
-            console.log('주인 정보 : ', owner_source);
+            if (result == 'not roamer') {
+                // 비밀번호 잘못 입력 페이지 렌더링
+                res.render('not_roamer.ejs', { title: '가출 신고된 금쪽이가 아닙니다.', message: server_ip + ":" +server_port + '/QRcode/?ca=' + ca }, function (err, html) {
+                    if (err) { console.log (err) }
+                    res.end(html);
+                })
+            } else {
+                owner_source = owner_source + result[0] + " " + result[1] + " " + result[2]
+                console.log('주인 정보 : ', owner_source);
 
-            res.render('whospet.ejs', { title: '금쪽이 찾기페이지', message: owner_source, }, function (err, html) {
-                if (err) {
-                    console.log(err)
-                }
-                res.end(html) // 응답 종료
-            })
-        })
-        .catch((err) => {
-            console.log('가출신고가 되지 않았습니다.');
+                res.render('whospet.ejs', { title: '금쪽이 찾기페이지', message: owner_source, }, function (err, html) {
+                    if (err) {
+                        console.log(err)
+                    }
+                    res.end(html) // 응답 종료
+                })
+            }
         })
 })
-// 블록체인에 사례금전송 요청하기
+// 블록체인에 사례금 전송 요청하기
 server.get('/QRcode/found_page/found', (req, res) => {
     console.log('블록체인에 사례금 전송 요청...');
 
     let input_query = url.parse(req.url, true).query;
+    const ca = input_query['ca'];
     const target_contract = contract_objects[input_query['ca']]
 
     foundPet(caller, target_contract, input_query['pw'])
         .then((result) => {
+            console.log(result);
             if (result == 'wrong password') {
                 // 비밀번호 잘못 입력 페이지 렌더링
+                res.render('wrong_password.ejs', { title: '패스워드 오류입니다.', message: server_ip + ":"+server_port + '/QRcode/found_page/?ca=' + ca }, function (err, html) {
+                    if (err) { console.log (err) }
+                    res.end(html);
+                })
+            } else if (result == 'not roamer') {
+                // 가출 상태가 아닙니다 페이지 렌더링
+                res.render('not_roamer.ejs', {
+                    title: '가출 신고된 금쪽이가 아닙니다.',
+                    message: server_ip + ":"+server_port + '/QRcode/?ca=' + ca }, function (err, html) {
+                    if (err) {
+                        console.log(err)
+                    }
+                    res.end(html);
+                })
             } else {
                 console.log('사례금 전송 완료');
                 res.render('found.ejs', function (err, html) {
@@ -379,50 +415,47 @@ async function registerPet(caller, pw, owner_name, owner_location, owner_phone, 
     return ca;
 }
 async function lostPet(caller, target_contract, pw, lost_location, prize) {
-    checkPassword(caller, target_contract, pw)
-        .catch(err => {
-            return 'wrong password';
-        })
+    try {
+        await target_contract.methods.checkPassword(pw)
+            .call({from : caller})
+    } catch { return 'wrong password'; }
 
-    await target_contract.methods.lostPet(lost_location)
-        .send({from : caller, gas : 3000000, value : web3.utils.toWei(prize, 'ether') })
-        .catch(err => {
-            return 'not roamer'
-        })
-    return 'true';
+    try {
+        await target_contract.methods.lostPet(lost_location)
+            .send({from : caller, gas : 3000000, value : web3.utils.toWei(prize, 'ether')})
+    } catch { return 'not roamer' }
 }
 async function cancelLost(caller, target_contract, pw) {
-    checkPassword(caller, target_contract, pw)
-        .catch(err => {
-            return 'wrong password';
-        })
-    await target_contract.methods.cancelLost()
-        .call({from : caller})
-        .catch(err => {
-            return 'not roamer';
-        })
-    return 'true';
+    try {
+        await target_contract.methods.checkPassword(pw)
+            .call({from : caller})
+    } catch { return 'wrong password'; }
+
+    try {
+        await target_contract.methods.cancelLost()
+            .call({from : caller})
+    } catch { return 'not roamer' }
 }
 async function whosPet(finder, target_contract) {
-    await target_contract.methods.setFinder()
-        .send({from : finder, gas : 3000000 })
-        .then(console.log('setFinder Done'))
-        .catch(err => {
-            return 'not roamer';
-        })
-    
+    try {
+        await target_contract.methods.setFinder()
+            .send({from : finder, gas : 3000000 })
+    } catch { return 'not roamer'; }
+
     return await target_contract.methods.getOwner()
         .call({from : finder})
         .then(console.log('getOwner Done'));
 }
 async function foundPet(caller, target_contract, pw) {
-    checkPassword(caller, target_contract, pw)
-        .catch(err => {
-            return 'wrong password';
-        })
+    try {
+        await target_contract.methods.checkPassword(pw)
+            .call({from : caller})
+    } catch { return 'wrong password'; }
 
-    return await target_contract.methods.foundPet()
-        .send({from : caller, gas : 3000000 });
+    try {
+        await target_contract.methods.foundPet()
+            .send({from : caller, gas : 3000000 })
+    } catch { return 'not roamer' }
 }
 async function checkLost(caller, target_contract) {
     return await target_contract.methods.checkLost()

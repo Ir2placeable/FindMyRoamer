@@ -11,17 +11,17 @@
 <body>
     <% for(var i=0; i < data.length; i++) {%>
         <p>
-        <h1>
+        <h2>
             <%= data[i].a %>
                 <%= data[i].b %>
-        </h1>
+        </h2>
         </p>
         <% } %>
-            <button onclick="movepage1()">메인화면으로</button>
+            <button onclick="movepage1()">이전화면으로</button>
             <button onclick="movepage2()">qr발급</button>
             <script type="text/javascript">
                 function movepage1() {
-                    location.href = "/"
+                    location.href = "/register_page"
                 }
                 function movepage2() {
                     alert("다음에 나오는 QR코드를 저장하세요");

@@ -84,6 +84,8 @@ contract FindMyPet4 {
     }
 
     function foundPet() payable public OnlyOwner {
+        require(lost == true);
+
         payable(finder_addr).transfer(pet.prize);
     }
 
@@ -93,7 +95,7 @@ contract FindMyPet4 {
         return pet;
     }
 
-    function checkPassword(string memory _password) private view{
+    function checkPassword(string memory _password) public view {
         require(keccak256(abi.encodePacked(password)) == keccak256(abi.encodePacked(_password)));
     }
 }
