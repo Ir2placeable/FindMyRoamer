@@ -14,18 +14,22 @@ const Web3 = require('web3');
 const blockchain_endpoint = 'http://172.31.8.46:8545';
 const web3 = new Web3(Web3.givenProvider || blockchain_endpoint);
 
-// Owner, Finder 고정 (Mock up)
-var owner;
+// Owner, caller2 고정 (Mock up)
+var caller;
+var caller2;
 var finder;
 web3.eth.getAccounts().then(result => {
     caller = result[0];
-    finder = result[1];
+    caller2 = result[1];
+    finder = result[2];
+    
     console.log('caller : ', caller);
+    console.log('caller2 : ', caller2);
     console.log('finder : ', finder);
-    console.log('');
 
     web3.eth.personal.unlockAccount(caller, "123", 0);
-    web3.eth.personal.unlockAccount(finder, "123", 0);
+    web3.eth.personal.unlockAccount(caller2, "123", 0);
+    web3.eth.personal.unlockAccount(finder, "123", 0)
 })
 contract_objects = {} // key : CA, value : Contract
 
@@ -69,9 +73,10 @@ server.get('/browse', (req, res) => {
         for (var temp_ca in contract_objects) {
             await checkLost(caller, contract_objects[temp_ca])
                 .then(result => {
-                    pet_source.push("이름:" + result[0] + " / 나이:" + result[1] + " / 종류:" + result[2] + " / 특징:" + result[3] + " / 분실위치:" + result[4] + " / 사례금:", parseInt(result[5])/1000000000000000000 + "Ether");
+                    pet_source.push("[가출] " + "이름:" + result[0] + " / 나이:" + result[1] + " / 종류:" + result[2] + " / 특징:" + result[3] + " / 분실위치:" + result[4] + " / 사례금:" + parseInt(result[5])/1000000000000000000 + " Ether");
                 })
-                .catch(error => {
+                .catch((err) => {
+                    console.log('reverted', err);
                 })
         }
         return pet_source;
@@ -307,7 +312,7 @@ server.get('/QRcode/whospet', (req, res) => {
     // aws_ip:3001/whospet/?ca=0x123
 
     var owner_source = "";
-    whosPet(finder, target_contract)
+    whosPet(caller2, finder, target_contract)
         .then(result => {
             if (result == 'not roamer') {
                 // 비밀번호 잘못 입력 페이지 렌더링
@@ -436,14 +441,14 @@ async function cancelLost(caller, target_contract, pw) {
             .call({from : caller})
     } catch { return 'not roamer' }
 }
-async function whosPet(finder, target_contract) {
+async function whosPet(caller2, finder, target_contract) {
     try {
-        await target_contract.methods.setFinder()
-            .send({from : finder, gas : 3000000 })
+        await target_contract.methods.setFinder(finder)
+            .send({from : caller2, gas : 3000000 })
     } catch { return 'not roamer'; }
 
     return await target_contract.methods.getOwner()
-        .call({from : finder})
+        .call({from : caller2})
         .then(console.log('getOwner Done'));
 }
 async function foundPet(caller, target_contract, pw) {

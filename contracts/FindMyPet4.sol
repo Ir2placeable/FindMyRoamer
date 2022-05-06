@@ -74,9 +74,10 @@ contract FindMyPet4 {
         pet.prize = 0;
     }
 
-    function setFinder() public {
+    function setFinder(address finder) public {
         require(lost == true);
-        finder_addr = msg.sender;
+        finder_addr = finder;
+        lost = false;
     }
 
     function getOwner() public view returns(Owner memory){
