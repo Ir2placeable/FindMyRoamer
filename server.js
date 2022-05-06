@@ -57,30 +57,36 @@ server.get('/register_page', (req, res) => {
 })
 // 분실된 금쪽이들을 보여주는 파트
 server.get('/browse', (req, res) => {
-    const getRoamers = async function () {
-        let pet_source = [];
+    let pet_source = [];
+    var roamers;
 
+    const getRoamers = async function () {
         for (var temp_ca in contract_objects) {
             await checkLost(caller, contract_objects[temp_ca])
                 .then(result => {
-                    pet_source.push("이름:" + result[0] + " / 나이:" + result[1] + " / 종류:" + result[2] + " / 특징:" + result[3] + " / 분실위치:" + result[4] + " / 사례금:" + parseInt(result[5])/1000000000000000000 + " Ether");
+                    if (result == 'not roamer') {
+                        console.log('reverted');
+                    } else {
+                        pet_source.push("이름:" + result[0] + " / 나이:" + result[1] + " / 종류:" + result[2] + " / 특징:" + result[3] + " / 분실위치:" + result[4] + " / 사례금:" + parseInt(result[5]) / 1000000000000000000 + " Ether" + "\n");
+                    }
                 })
-                .catch((err) => { console.log('reverted');})
         }
-        return pet_source;
     }
 
-    getRoamers().then(result => {
-        var roamers;
-        if (result.length == 0) {
+    getRoamers().then(() => {
+        console.log('pet_source : ', pet_source);
+
+        if (pet_source.length == 0) {
             roamers = '가출한 금쪽이들이 없습니다.';
-        } else { roamers = result; }
+        } else {
+            roamers = pet_source;
+        }
+
         res.render('browse.ejs', { title: 'QR 메인페이지', message: roamers, }, function (err, html) {
             if (err) { console.log(err) }
             res.end(html) // 응답 종료
         })
     })
-
 })
 // 내 잔액 보기 페이지
 server.get('/balance', (req, res) => {
@@ -377,7 +383,7 @@ async function cancelLost(caller, target_contract, pw) {
 
     try {
         await target_contract.methods.cancelLost()
-            .call({from : caller})
+            .send({from : caller, gas : 3000000 })
     } catch { return 'not roamer' }
 }
 async function whosPet(caller2, finder, target_contract) {
@@ -401,15 +407,15 @@ async function foundPet(caller, target_contract, pw) {
     } catch { return 'not roamer' }
 }
 async function checkLost(caller, target_contract) {
-    return await target_contract.methods.checkLost()
-        .call({from : caller})
-        .catch(err => { console.log('reverted'); })
+    try {
+        return await target_contract.methods.checkLost()
+            .call({from : caller})
+    } catch { return 'not roamer'; }
 }
 async function checkPassword(caller, target_contract, password) {
     await target_contract.methods.checkPassword(password)
         .call({from : caller})
 }
-
 
 server.listen(server_port, () => {
     console.log('FindMyRoamer server open');
