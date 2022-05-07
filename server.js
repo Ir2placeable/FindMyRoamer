@@ -303,10 +303,10 @@ server.get('/QRcode/found_page/found', (req, res) => {
                     if (err) { console.log (err) }
                     res.end(html);
                 })
-            } else if (result == 'not roamer') {
+            } else if (result == 'not founder') {
                 // 가출 상태가 아닙니다 페이지 렌더링
-                res.render('not_roamer.ejs', {
-                    title: '가출 신고된 금쪽이가 아닙니다.',
+                res.render('not_finder.ejs', {
+                    title: '금쪽이를 발견한 사람이 없습니다.',
                     message: server_ip + ":"+server_port + '/QRcode/?ca=' + ca }, function (err, html) {
                     if (err) {
                         console.log(err)
@@ -404,7 +404,7 @@ async function foundPet(caller, target_contract, pw) {
     try {
         await target_contract.methods.foundPet()
             .send({from : caller, gas : 3000000 })
-    } catch { return 'not roamer' }
+    } catch { return 'not founder'; }
 }
 async function checkLost(caller, target_contract) {
     try {

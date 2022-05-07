@@ -11,6 +11,7 @@ contract FindMyPet4 {
 
     // lost condition
     bool private lost = false;
+    bool private find = false;
 
     // owner part
     struct Owner {
@@ -76,8 +77,10 @@ contract FindMyPet4 {
 
     function setFinder(address finder) public {
         require(lost == true);
+
         finder_addr = finder;
         lost = false;
+        find = true;
     }
 
     function getOwner() public view returns(Owner memory){
@@ -85,7 +88,7 @@ contract FindMyPet4 {
     }
 
     function foundPet() payable public OnlyOwner {
-        require(lost == true);
+        require(find == true);
 
         payable(finder_addr).transfer(pet.prize);
     }
