@@ -8,13 +8,19 @@
 
 <body id="body" className="body">
     <h1>집나간 금쪽이들</h1>
-    <h3><%=message%></h3>
+    <ul>
+        <% for(var i=0; i < message.length; i++) {%>
+            <li>
+                <%= message[i] %>
+            </li>
+            <% } %>
+    </ul>
     <button onclick="movepage1()">메인화면으로</button>
-        <script type="text/javascript">
-            function movepage1() {
-                location.href = "/"
-            }
-        </script>
+            <script type="text/javascript">
+                function movepage1() {
+                    location.href = "/"
+                }
+            </script>
 </body>
 
 </html>
