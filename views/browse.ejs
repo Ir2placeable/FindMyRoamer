@@ -9,11 +9,13 @@
 <body id="body" className="body">
     <h1>집나간 금쪽이들</h1>
     <ul>
-        <% for(var i=0; i < message.length; i++) {%>
+        <% if (message == '가출한 금쪽이들이 없습니다.') { %>
+            <p> <%= message %> </p>
+        <% } else { for(var i=0; i < message.length; i++) { %>
             <li>
                 <%= message[i] %>
             </li>
-            <% } %>
+            <% }}%>
     </ul>
     <button onclick="movepage1()">메인화면으로</button>
             <script type="text/javascript">
