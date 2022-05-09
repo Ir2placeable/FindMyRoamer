@@ -19,3 +19,5 @@ QR을 금쪽이 목걸이에 달아주세요.
 # 소개영상
 https://youtu.be/tDceVXWnjJo
 
+# 시연영상
+https://youtu.be/W5_49lrBq2E
